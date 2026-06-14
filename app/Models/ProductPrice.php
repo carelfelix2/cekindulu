@@ -1,0 +1,3 @@
+<?php
+namespace App\Models;use Illuminate\Database\Eloquent\Model;use Illuminate\Database\Eloquent\Factories\HasFactory;
+class ProductPrice extends Model{use HasFactory;protected $fillable=['product_id','marketplace_id','seller_name','product_url','price','original_price','discount','rating','sold_count','review_count','is_recommended','last_updated_at'];protected $casts=['is_recommended'=>'boolean','last_updated_at'=>'datetime','rating'=>'float'];public function product(){return $this->belongsTo(Product::class);}public function marketplace(){return $this->belongsTo(Marketplace::class);}public function affiliateLinks(){return $this->hasMany(AffiliateLink::class,'product_price_id');}}

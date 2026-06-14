@@ -1,0 +1,2 @@
+<?php
+namespace App\Models;use Illuminate\Database\Eloquent\Model;use Illuminate\Database\Eloquent\Factories\HasFactory;class AffiliateClick extends Model{use HasFactory; protected $fillable=['affiliate_link_id','product_id','marketplace_id','ip_address','user_agent','referrer']; public function affiliateLink(){return $this->belongsTo(AffiliateLink::class);} public function product(){return $this->belongsTo(Product::class);} public function marketplace(){return $this->belongsTo(Marketplace::class);}}

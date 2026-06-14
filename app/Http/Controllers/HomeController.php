@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers;use App\Models\Article;use App\Models\Category;use App\Models\Product;
+class HomeController extends Controller{public function index(){return view('pages.home',['categories'=>Category::where('is_active',1)->limit(10)->get(),'worthProducts'=>Product::published()->with(['category','brand','prices.marketplace'])->orderByDesc('worth_it_score')->limit(10)->get(),'trendingProducts'=>Product::published()->where('is_trending',1)->with(['category','brand','prices.marketplace'])->limit(10)->get(),'articles'=>Article::published()->latest('published_at')->limit(6)->get()]);}}

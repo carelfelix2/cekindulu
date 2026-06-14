@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers;use App\Models\AffiliateClick;use App\Models\AffiliateLink;use Illuminate\Http\Request;
+class AffiliateRedirectController extends Controller{public function go(Request $request,AffiliateLink $affiliateLink){abort_unless($affiliateLink->is_active,404);AffiliateClick::create(['affiliate_link_id'=>$affiliateLink->id,'product_id'=>$affiliateLink->product_id,'marketplace_id'=>$affiliateLink->marketplace_id,'ip_address'=>$request->ip(),'user_agent'=>substr((string)$request->userAgent(),0,1000),'referrer'=>substr((string)$request->headers->get('referer'),0,1000)]);$affiliateLink->increment('click_count');return redirect()->away($affiliateLink->affiliate_url);}}

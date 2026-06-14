@@ -1,0 +1,3 @@
+<?php
+namespace App\Http\Controllers;use App\Models\Product;use Illuminate\Http\Request;
+class CompareController extends Controller{public function index(Request $request){$ids=collect(explode(',',$request->get('products','')))->filter()->take(4)->values();$products=Product::published()->with(['category','brand','prices.marketplace'])->when($ids->count(),fn($q)=>$q->whereIn('id',$ids))->orderByDesc('worth_it_score')->limit($ids->count()?:4)->get();if($products->isEmpty()){$products=Product::published()->with(['category','brand','prices.marketplace'])->orderByDesc('worth_it_score')->limit(4)->get();}return view('pages.compare.index',compact('products'));}}
