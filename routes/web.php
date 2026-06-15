@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CompareController;
 use App\Http\Controllers\AffiliateRedirectController;
+use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,20 @@ Route::get('/articles', [ArticleController::class, 'index'])->name('articles.ind
 Route::get('/articles/{article:slug}', [ArticleController::class, 'show'])->name('articles.show');
 Route::get('/compare', [CompareController::class, 'index'])->name('compare.index');
 Route::get('/go/{affiliateLink}', [AffiliateRedirectController::class, 'go'])->name('affiliate.go');
+
+/*
+|--------------------------------------------------------------------------
+| Membership Routes (public listing, auth required for checkout)
+|--------------------------------------------------------------------------
+*/
+Route::get('/membership', [MembershipController::class, 'index'])->name('membership.index');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/membership/{slug}/checkout', [MembershipController::class, 'checkout'])->name('membership.checkout');
+    Route::post('/membership/{slug}/checkout', [MembershipController::class, 'processCheckout'])->name('membership.checkout.process');
+    Route::get('/dashboard/transactions', [MembershipController::class, 'transactions'])->name('membership.transactions');
+    Route::get('/dashboard/transactions/{invoiceNumber}', [MembershipController::class, 'transactionDetail'])->name('membership.transactions.detail');
+});
 
 /*
 |--------------------------------------------------------------------------

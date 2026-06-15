@@ -5,6 +5,30 @@
             <p>Selamat datang kembali, {{ Auth::user()->name }}!</p>
         </div>
 
+        {{-- Membership Status Banner --}}
+        @php
+            $activeMembership = Auth::user()->activeMembership()->with('membershipPlan')->first();
+        @endphp
+        @if($activeMembership)
+            <div class="membership-banner premium">
+                <div class="banner-icon">⭐</div>
+                <div class="banner-content">
+                    <h3>Premium Member</h3>
+                    <p>Paket {{ $activeMembership->membershipPlan->name }} aktif hingga {{ $activeMembership->ends_at->format('d M Y') }}</p>
+                </div>
+                <a href="{{ route('membership.transactions') }}" class="btn btn-sm btn-banner">Lihat Transaksi</a>
+            </div>
+        @else
+            <div class="membership-banner free">
+                <div class="banner-icon">🔓</div>
+                <div class="banner-content">
+                    <h3>Member Gratis</h3>
+                    <p>Upgrade ke premium untuk akses fitur eksklusif!</p>
+                </div>
+                <a href="{{ route('membership.index') }}" class="btn btn-sm btn-banner">Lihat Paket</a>
+            </div>
+        @endif
+
         <div class="dashboard-grid">
             <div class="dashboard-card">
                 <div class="card-icon">👤</div>
@@ -12,6 +36,15 @@
                     <h3>Profil Saya</h3>
                     <p>{{ Auth::user()->email }}</p>
                     <a href="{{ route('profile.edit') }}" class="btn btn-sm">Kelola Profil</a>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-icon">📋</div>
+                <div class="card-content">
+                    <h3>Riwayat Transaksi</h3>
+                    <p>Cek status pembelian membership</p>
+                    <a href="{{ route('membership.transactions') }}" class="btn btn-sm">Lihat Transaksi</a>
                 </div>
             </div>
 
@@ -60,6 +93,51 @@
             color: #6b7280;
             margin-top: 0.25rem;
         }
+
+        /* Membership Banner */
+        .membership-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        .membership-banner.premium {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+        }
+        .membership-banner.free {
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            border: 1px solid #6366f1;
+        }
+        .banner-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+        .banner-content {
+            flex: 1;
+        }
+        .banner-content h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 0.15rem;
+        }
+        .banner-content p {
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+        .btn-banner {
+            background: rgba(255,255,255,0.8);
+            color: #1a1a2e;
+            border: 1px solid rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .btn-banner:hover {
+            background: #fff;
+        }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

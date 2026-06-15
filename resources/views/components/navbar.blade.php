@@ -4,6 +4,7 @@
         <a href="{{ route('products.index') }}">Produk</a>
         <a href="{{ route('articles.index') }}">Artikel</a>
         <a href="{{ route('compare.index') }}">Bandingkan</a>
+        <a href="{{ route('membership.index') }}">Membership</a>
     </div>
     <form action="{{ route('products.index') }}" method="GET" class="search-bar">
         <span>🔍</span>
@@ -16,6 +17,9 @@
             <div class="nav-dropdown">
                 <button class="nav-dropdown-trigger">
                     <span class="nav-user-name">{{ Auth::user()->name }}</span>
+                    @if(Auth::user()->isPremium())
+                        <span class="premium-badge" title="Premium Member">⭐</span>
+                    @endif
                     @if(Auth::user()->avatar)
                         <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="" class="nav-avatar">
                     @else
@@ -27,11 +31,17 @@
                 </button>
                 <div class="nav-dropdown-menu">
                     <div class="dropdown-header">
-                        <span class="dropdown-user-name">{{ Auth::user()->name }}</span>
+                        <span class="dropdown-user-name">
+                            {{ Auth::user()->name }}
+                            @if(Auth::user()->isPremium())
+                                <span class="premium-badge-text">Premium</span>
+                            @endif
+                        </span>
                         <span class="dropdown-user-email">{{ Auth::user()->email }}</span>
                     </div>
                     <div class="dropdown-divider"></div>
                     <a href="{{ route('dashboard') }}" class="dropdown-item">Dashboard</a>
+                    <a href="{{ route('membership.transactions') }}" class="dropdown-item">Riwayat Transaksi</a>
                     <a href="{{ route('profile.edit') }}" class="dropdown-item">Profil Saya</a>
                     @if(Auth::user()->isAdmin())
                         <div class="dropdown-divider"></div>
@@ -66,6 +76,25 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+    }
+
+    .premium-badge {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .premium-badge-text {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #92400e;
+        background: #fef3c7;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        margin-left: 0.35rem;
+        vertical-align: middle;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .btn-login {

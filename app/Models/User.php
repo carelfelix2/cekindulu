@@ -9,6 +9,8 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -63,5 +65,46 @@ class User extends Authenticatable implements FilamentUser
     public function isMember(): bool
     {
         return $this->role === 'member';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Membership / Subscription Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * All transactions made by the user.
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * All membership records for the user.
+     */
+    public function userMemberships(): HasMany
+    {
+        return $this->hasMany(UserMembership::class);
+    }
+
+    /**
+     * Get the user's currently active membership (if any).
+     */
+    public function activeMembership(): HasOne
+    {
+        return $this->hasOne(UserMembership::class)
+            ->where('is_active', true)
+            ->where('ends_at', '>=', now())
+            ->latest('id');
+    }
+
+    /**
+     * Check if the user has an active premium membership.
+     */
+    public function isPremium(): bool
+    {
+        return $this->activeMembership()->exists();
     }
 }
