@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages\CreateCategory;
@@ -14,21 +15,39 @@ use Filament\Tables\Table;
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $navigationIcon = 'heroicon-o-tag';
+
+    protected static ?string $navigationGroup = 'Produk';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->maxLength(255),
-            Forms\Components\TextInput::make('title')->maxLength(255),
-            Forms\Components\TextInput::make('slug')->maxLength(255),
-            Forms\Components\Textarea::make('description')->columnSpanFull(),
-            Forms\Components\Textarea::make('content')->columnSpanFull(),
-            Forms\Components\TextInput::make('price')->numeric(),
-            Forms\Components\TextInput::make('affiliate_url'),
-            Forms\Components\TextInput::make('worth_it_score')->numeric(),
-            Forms\Components\Toggle::make('is_active'),
-            Forms\Components\Select::make('status')->options(['draft' => 'Draft', 'published' => 'Published', 'archived' => 'Archived']),
+            Forms\Components\Section::make('Informasi Kategori')->schema([
+                Forms\Components\TextInput::make('name')
+                    ->label('Nama Kategori')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('slug')
+                    ->label('Slug')
+                    ->required()
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true),
+                Forms\Components\TextInput::make('icon')
+                    ->label('Ikon')
+                    ->placeholder('contoh: heroicon-o-folder')
+                    ->maxLength(255)
+                    ->helperText('Nama ikon dari Heroicons atau Font Awesome'),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Aktif')
+                    ->default(true),
+                Forms\Components\Textarea::make('description')
+                    ->label('Deskripsi')
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])->columns(2),
         ]);
     }
 
@@ -36,15 +55,50 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('name')->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('slug')->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('status')->badge()->toggleable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nama Kategori')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('slug')
+                    ->label('Slug')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('icon')
+                    ->label('Ikon')
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktif')
+                    ->boolean()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('products_count')
+                    ->label('Jumlah Produk')
+                    ->counts('products')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->actions([Tables\Actions\EditAction::make()])
-            ->bulkActions([Tables\Actions\BulkActionGroup::make([Tables\Actions\DeleteBulkAction::make()])]);
+            ->filters([
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Status Aktif'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make()
+                    ->label('Edit'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('Hapus'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getPages(): array
