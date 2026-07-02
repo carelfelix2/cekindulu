@@ -1,69 +1,40 @@
+import './bootstrap';
 import Alpine from 'alpinejs';
+import persist from '@alpinejs/persist';
 
-window.Alpine = Alpine;
+// ── Alpine Plugins ──
+Alpine.plugin(persist);
 
-// ============================================================
-// Dark Mode Toggle
-// ============================================================
-Alpine.store('theme', {
-    dark: localStorage.getItem('theme') === 'dark' ||
-         (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+// ── Theme Store ──
+document.addEventListener('alpine:init', () => {
+    Alpine.store('theme', {
+        dark: Alpine.$persist(false).as('cekdulu-theme'),
 
-    init() {
-        this.apply();
-        this.$watch('dark', () => this.apply());
-    },
+        init() {
+            if (this.dark === undefined) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDark) {
+                    this.dark = true;
+                }
+            }
+        },
 
-    toggle() {
-        this.dark = !this.dark;
-    },
-
-    apply() {
-        if (this.dark) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    }
+        toggle() {
+            this.dark = !this.dark;
+        },
+    });
 });
 
-// ============================================================
-// Navbar scroll effect
-// ============================================================
+// ── Navbar scroll store ──
 Alpine.data('navbar', () => ({
     scrolled: false,
-    mobileOpen: false,
-
     init() {
-        this.onScroll = () => {
-            this.scrolled = window.scrollY > 20;
-        };
-        window.addEventListener('scroll', this.onScroll, { passive: true });
-        this.scrolled = window.scrollY > 20;
+        window.addEventListener('scroll', () => {
+            this.scrolled = window.scrollY > 10;
+        }, { passive: true });
     },
-
-    destroy() {
-        window.removeEventListener('scroll', this.onScroll);
-    }
 }));
 
-// ============================================================
-// Mobile menu drawer
-// ============================================================
-Alpine.data('mobileMenu', () => ({
-    open: false,
-
-    toggle() {
-        this.open = !this.open;
-        document.body.style.overflow = this.open ? 'hidden' : '';
-    },
-
-    close() {
-        this.open = false;
-        document.body.style.overflow = '';
-    }
-}));
-
+// ── Bootstrap Alpine ──
+window.Alpine = Alpine;
 Alpine.start();

@@ -1,163 +1,141 @@
-<x-layouts.app title="Membership Premium - CekDulu">
+<x-layouts.app title="Paket Premium">
 
-{{-- Page Header with Gradient --}}
-<div class="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 dark:from-surface-900 dark:via-surface-900 dark:to-surface-800">
-    {{-- Decorative Blobs --}}
-    <div class="absolute top-0 right-0 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 animate-float"></div>
-    <div class="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 animate-float" style="animation-delay: 2s;"></div>
-
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 text-center">
-        <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/15 backdrop-blur-sm text-white/90 text-xs font-semibold rounded-full mb-6">
-            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+{{-- Header --}}
+<div class="bg-white dark:bg-surface-950 border-b border-surface-200 dark:border-surface-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800/50 text-accent-700 dark:text-accent-400 text-xs font-semibold mb-4">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
             CekDulu Premium
-        </div>
-        <h1 class="text-3xl lg:text-4xl font-extrabold text-white font-display">
-            Upgrade Pengalaman CekDulu Kamu
+        </span>
+        <h1 class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white font-display tracking-tight">
+            Belanja Lebih Cerdas
         </h1>
-        <p class="mt-4 text-primary-100 text-sm lg:text-base max-w-2xl mx-auto">
-            Dapatkan akses ke fitur eksklusif, price alert, dan insight mendalam untuk membantu kamu belanja lebih cerdas.
+        <p class="mt-3 text-surface-500 dark:text-surface-400 max-w-lg mx-auto">
+            Pilih paket yang sesuai dan nikmati fitur eksklusif untuk pengalaman belanja terbaik.
         </p>
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    {{-- Active Membership Banner --}}
+    @auth
+        @if(Auth::user()->activeMembership)
+            @php $membership = Auth::user()->activeMembership; @endphp
+            <div class="mb-10 bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    </div>
+                    <div>
+                        <p class="font-bold text-sm">Kamu sudah Premium!</p>
+                        <p class="text-xs text-primary-100">Aktif hingga {{ $membership->ends_at?->format('d M Y') }}</p>
+                    </div>
+                </div>
+                <a href="{{ route('membership.transactions') }}" class="btn btn-sm bg-white/15 hover:bg-white/25 text-white border border-white/20 shrink-0">
+                    Lihat Transaksi
+                </a>
+            </div>
+        @endif
+    @endauth
 
     {{-- Plans Grid --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-        @forelse($plans as $plan)
+    <div class="grid grid-cols-1 md:grid-cols-{{ $plans->count() > 2 ? '3' : '2' }} gap-6">
+        @foreach($plans as $plan)
             @php
-                $isPopular = $plan->duration_days >= 30 && $plan->duration_days < 365;
-                $isBestValue = $plan->duration_days >= 365;
+                $isPopular = $plan->is_popular ?? false;
+                $features = is_array($plan->features) ? $plan->features : json_decode($plan->features ?? '[]', true);
             @endphp
-            <div class="group relative bg-white dark:bg-surface-900 rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden flex flex-col
-                        {{ $isPopular ? 'border-primary-400 dark:border-primary-600 shadow-md shadow-primary-100 dark:shadow-primary-900/20' : ($isBestValue ? 'border-amber-400 dark:border-amber-600 shadow-lg shadow-amber-100 dark:shadow-amber-900/20' : 'border-surface-200 dark:border-surface-800 hover:border-surface-400 dark:hover:border-surface-700') }}">
+            <div class="relative flex flex-col rounded-2xl border-2 {{ $isPopular ? 'border-primary-500 shadow-xl shadow-primary-500/10' : 'border-surface-200 dark:border-surface-700' }} bg-white dark:bg-surface-900 overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
 
-                {{-- Popular / Best Value Badge --}}
                 @if($isPopular)
-                    <div class="absolute top-0 left-0 right-0 bg-primary-600 text-white text-center text-xs font-bold py-1.5 tracking-wide">
-                        PALING POPULER
-                    </div>
-                @elseif($isBestValue)
-                    <div class="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-center text-xs font-bold py-1.5 tracking-wide">
-                        HEMAT TERBAIK ⭐
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-primary-400"></div>
+                    <div class="absolute top-4 right-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-600 text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+                            Terpopuler
+                        </span>
                     </div>
                 @endif
 
-                {{-- Card Body --}}
-                <div class="p-6 lg:p-8 flex flex-col flex-1 {{ ($isPopular || $isBestValue) ? 'pt-10' : '' }}">
-
-                    {{-- Plan Name --}}
-                    <h3 class="text-lg font-bold text-surface-900 dark:text-white font-display text-center">{{ $plan->name }}</h3>
-
-                    {{-- Price --}}
-                    <div class="mt-4 text-center">
-                        <div class="flex items-baseline justify-center gap-1">
-                            <span class="text-3xl lg:text-4xl font-extrabold text-surface-900 dark:text-white font-display">{{ $plan->formatted_price }}</span>
-                            <span class="text-sm text-surface-500 dark:text-surface-400">/ {{ $plan->duration_label }}</span>
-                        </div>
-                        @if($plan->price > 0 && $plan->duration_days > 0)
-                            @php $dailyPrice = floor($plan->price / $plan->duration_days); @endphp
-                            <p class="text-xs text-surface-400 dark:text-surface-500 mt-1">Rp {{ number_format($dailyPrice, 0, ',', '.') }}/hari</p>
-                        @endif
-                    </div>
-
-                    {{-- Description --}}
+                <div class="p-6 flex-1">
+                    <h3 class="text-base font-bold text-surface-900 dark:text-white font-display mb-1">{{ $plan->name }}</h3>
                     @if($plan->description)
-                        <p class="mt-4 text-sm text-surface-500 dark:text-surface-400 text-center">{{ $plan->description }}</p>
+                        <p class="text-xs text-surface-500 dark:text-surface-400 mb-5">{{ $plan->description }}</p>
                     @endif
 
-                    {{-- Features --}}
-                    @if($plan->features && count($plan->features))
-                        <ul class="mt-6 space-y-3 flex-1">
-                            @foreach($plan->features as $feature)
-                                <li class="flex items-start gap-2.5 text-sm text-surface-700 dark:text-surface-300">
-                                    <svg class="w-5 h-5 flex-shrink-0 text-emerald-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    {{ $feature }}
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
+                    <div class="mb-6">
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-3xl font-extrabold text-surface-900 dark:text-white font-display tracking-tight">
+                                Rp {{ number_format($plan->price, 0, ',', '.') }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-surface-400 dark:text-surface-500 mt-0.5">
+                            / {{ $plan->duration_days }} hari
+                        </p>
+                    </div>
 
-                    {{-- CTA Button --}}
-                    <div class="mt-6">
-                        @auth
-                            <a href="{{ route('membership.checkout', $plan->slug) }}"
-                               class="block text-center py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:-translate-y-0.5
-                                      {{ $isBestValue ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:shadow-lg hover:shadow-amber-200 dark:hover:shadow-amber-900/30' : ($isPopular ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-200 dark:hover:shadow-primary-900/30' : 'bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-700') }}">
-                                Beli Sekarang
-                            </a>
+                    <ul class="space-y-2.5 mb-6">
+                        @foreach($features as $feature)
+                            <li class="flex items-start gap-2.5 text-sm text-surface-700 dark:text-surface-300">
+                                <svg class="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                {{ $feature }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                <div class="px-6 pb-6">
+                    @auth
+                        @if(Auth::user()->activeMembership)
+                            <button disabled class="btn btn-secondary btn-md w-full justify-center opacity-60 cursor-not-allowed">
+                                Sudah Aktif
+                            </button>
                         @else
-                            <a href="{{ route('login') }}"
-                               class="block text-center py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:-translate-y-0.5
-                                      {{ $isBestValue ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:shadow-lg hover:shadow-amber-200 dark:hover:shadow-amber-900/30' : ($isPopular ? 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-200 dark:hover:shadow-primary-900/30' : 'bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-700') }}">
-                                Masuk untuk Membeli
+                            <a href="{{ route('membership.checkout', $plan) }}"
+                               class="btn {{ $isPopular ? 'btn-primary' : 'btn-outline' }} btn-md w-full justify-center">
+                                Pilih Paket
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                             </a>
-                        @endauth
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}"
+                           class="btn {{ $isPopular ? 'btn-primary' : 'btn-outline' }} btn-md w-full justify-center">
+                            Masuk untuk Berlangganan
+                        </a>
+                    @endauth
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- FAQ --}}
+    <div class="mt-16">
+        <h2 class="text-xl font-extrabold text-surface-900 dark:text-white font-display text-center mb-8">Pertanyaan Umum</h2>
+        <div class="space-y-3 max-w-2xl mx-auto" x-data="{ open: null }">
+            @foreach([
+                ['q' => 'Bagaimana cara pembayaran?', 'a' => 'Pembayaran dilakukan melalui transfer bank. Setelah transfer, upload bukti pembayaran dan tim kami akan memverifikasi dalam 1x24 jam.'],
+                ['q' => 'Apakah bisa refund?', 'a' => 'Refund dapat dilakukan dalam 3 hari setelah pembayaran jika membership belum digunakan.'],
+                ['q' => 'Apa yang didapat dengan Premium?', 'a' => 'Akses ke price alert, analitik mendalam, diskon eksklusif, dan fitur perbandingan lanjutan.'],
+            ] as $i => $faq)
+                <div class="bg-white dark:bg-surface-900 rounded-xl border border-surface-200 dark:border-surface-800 overflow-hidden">
+                    <button @click="open = open === {{ $i }} ? null : {{ $i }}"
+                            class="flex items-center justify-between w-full px-5 py-4 text-left">
+                        <span class="text-sm font-semibold text-surface-800 dark:text-surface-200">{{ $faq['q'] }}</span>
+                        <svg class="w-4 h-4 text-surface-400 transition-transform duration-200 flex-shrink-0 ml-3"
+                             :class="open === {{ $i }} ? 'rotate-180' : ''"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open === {{ $i }}"
+                         x-transition:enter="transition ease-out duration-150"
+                         x-transition:enter-start="opacity-0 -translate-y-1"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="px-5 pb-4 text-sm text-surface-500 dark:text-surface-400 leading-relaxed border-t border-surface-100 dark:border-surface-800 pt-3"
+                         style="display:none">
+                        {{ $faq['a'] }}
                     </div>
                 </div>
-            </div>
-        @empty
-            <div class="col-span-full text-center py-16">
-                <div class="w-20 h-20 mx-auto mb-4 bg-surface-100 dark:bg-surface-800 rounded-full flex items-center justify-center">
-                    <svg class="w-10 h-10 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <h3 class="text-lg font-bold text-surface-800 dark:text-surface-200">Belum ada paket tersedia</h3>
-                <p class="text-surface-500 dark:text-surface-400 text-sm mt-1">Silakan cek lagi nanti untuk paket membership terbaru.</p>
-            </div>
-        @endforelse
-    </div>
-
-    {{-- Benefits Section --}}
-    <div class="text-center mb-8">
-        <h2 class="text-2xl lg:text-3xl font-extrabold text-surface-900 dark:text-white font-display">Kenapa Harus Premium?</h2>
-        <p class="mt-2 text-surface-500 dark:text-surface-400">Semua yang kamu butuhkan untuk belanja lebih cerdas.</p>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
-        {{-- Benefit 1 --}}
-        <div class="group bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 p-6 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-300">
-            <div class="w-11 h-11 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-            </div>
-            <h3 class="font-bold text-surface-900 dark:text-white mb-1.5">Price Alert</h3>
-            <p class="text-sm text-surface-500 dark:text-surface-400 leading-relaxed">Dapatkan notifikasi instan saat harga produk favoritmu turun ke harga yang kamu inginkan.</p>
+            @endforeach
         </div>
-
-        {{-- Benefit 2 --}}
-        <div class="group bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 p-6 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-300">
-            <div class="w-11 h-11 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-            </div>
-            <h3 class="font-bold text-surface-900 dark:text-white mb-1.5">Diskon Eksklusif</h3>
-            <p class="text-sm text-surface-500 dark:text-surface-400 leading-relaxed">Akses kode promo dan penawaran spesial yang hanya tersedia untuk member premium CekDulu.</p>
-        </div>
-
-        {{-- Benefit 3 --}}
-        <div class="group bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 p-6 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-300">
-            <div class="w-11 h-11 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-            </div>
-            <h3 class="font-bold text-surface-900 dark:text-white mb-1.5">Analitik Mendalam</h3>
-            <p class="text-sm text-surface-500 dark:text-surface-400 leading-relaxed">Lihat tren harga historis dan prediksi untuk membantu kamu memutuskan kapan waktu terbaik membeli.</p>
-        </div>
-
-        {{-- Benefit 4 --}}
-        <div class="group bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 p-6 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-300">
-            <div class="w-11 h-11 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-            </div>
-            <h3 class="font-bold text-surface-900 dark:text-white mb-1.5">Badge Premium</h3>
-            <p class="text-sm text-surface-500 dark:text-surface-400 leading-relaxed">Tampilkan lencana "Premium Member" eksklusif di profil dan kontribusi kamu di komunitas CekDulu.</p>
-        </div>
-    </div>
-
-    {{-- FAQ / Trust Strip --}}
-    <div class="bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 p-6 lg:p-8 text-center">
-        <p class="text-sm text-surface-500 dark:text-surface-400 mb-4">Punya pertanyaan? Tim kami siap membantu.</p>
-        <a href="#" class="btn-secondary text-sm px-6 py-2.5 rounded-xl inline-flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Hubungi Kami
-        </a>
     </div>
 </div>
 
