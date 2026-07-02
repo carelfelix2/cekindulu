@@ -33,7 +33,7 @@ class ProductPriceFactory extends Factory
             'product_url' => 'https://www.' . strtolower($marketplace->name) . '.co.id/product/' . $product->slug . '-' . fake()->randomNumber(8),
             'price' => $discountPrice,
             'original_price' => (int) $originalPrice,
-            'discount' => $discountPercent . '%',
+            'discount' => $discountPercent,
             'rating' => fake()->randomFloat(2, 3.5, 5.0),
             'sold_count' => fake()->numberBetween(10, 50000),
             'review_count' => fake()->numberBetween(5, 8000),

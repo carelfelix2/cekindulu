@@ -28,7 +28,7 @@ class CategoryFactory extends Factory
                 'Processor' => 'cpu', 'GPU' => 'gpu', 'Office' => 'briefcase',
                 'Home Appliance' => 'refrigerator', 'Accessories' => 'cable',
                 default => 'package',
-            }),
+            },
             'description' => fn(array $a) => "Kategori {$a['name']} - Temukan rekomendasi {$a['name']} terbaik dan termurah di CekDulu.",
             'is_active' => true,
         ];
