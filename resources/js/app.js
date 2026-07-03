@@ -8,14 +8,14 @@ Alpine.plugin(persist);
 // ── Theme Store ──
 document.addEventListener('alpine:init', () => {
     Alpine.store('theme', {
+        // Default to light mode (false = light, true = dark)
         dark: Alpine.$persist(false).as('cekdulu-theme'),
 
         init() {
-            if (this.dark === undefined) {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (prefersDark) {
-                    this.dark = true;
-                }
+            // Force light mode as default if no preference is stored
+            // User must explicitly toggle to dark mode
+            if (this.dark === null || this.dark === undefined) {
+                this.dark = false;
             }
         },
 

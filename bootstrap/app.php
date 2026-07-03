@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => CheckRole::class,
             'premium' => EnsurePremium::class,
         ]);
+
+        // Exclude Midtrans webhook from CSRF protection
+        $middleware->validateCsrfTokens(except: [
+            'payment/midtrans/notification',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

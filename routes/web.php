@@ -34,7 +34,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/membership/{slug}/checkout', [MembershipController::class, 'processCheckout'])->name('membership.checkout.process');
     Route::get('/dashboard/transactions', [MembershipController::class, 'transactions'])->name('membership.transactions');
     Route::get('/dashboard/transactions/{invoiceNumber}', [MembershipController::class, 'transactionDetail'])->name('membership.transactions.detail');
+    Route::post('/dashboard/transactions/{invoiceNumber}/upload-proof', [MembershipController::class, 'uploadPaymentProof'])->name('membership.transactions.upload-proof');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Midtrans Webhook (no CSRF protection needed)
+|--------------------------------------------------------------------------
+*/
+Route::post('/payment/midtrans/notification', [App\Http\Controllers\MidtransWebhookController::class, 'notification'])->name('midtrans.notification');
 
 /*
 |--------------------------------------------------------------------------
@@ -42,9 +50,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Member dashboard
+    // Smart dashboard redirect based on role
     Route::get('/dashboard', function () {
-        return view('dashboard');
+        $user = Auth::user();
+
+        // Redirect admin to admin dashboard
+        if ($user && $user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        // Redirect regular users to user dashboard
+        return redirect()->route('user.dashboard');
     })->name('dashboard');
 
     // Profile management (from Breeze)
@@ -55,11 +71,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| User Dashboard Routes (require login)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified'])->prefix('user')->name('user.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\User\DashboardController::class, 'index'])->name('dashboard');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Admin Routes (require login + admin role)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Admin-specific routes can be added here if needed outside Filament
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+    // Reward Management
+    Route::get('/rewards', [App\Http\Controllers\Admin\RewardController::class, 'index'])->name('rewards.index');
+    Route::post('/rewards/{reward}/approve', [App\Http\Controllers\Admin\RewardController::class, 'approve'])->name('rewards.approve');
+    Route::post('/rewards/{reward}/reject', [App\Http\Controllers\Admin\RewardController::class, 'reject'])->name('rewards.reject');
+    Route::post('/rewards/bulk-approve', [App\Http\Controllers\Admin\RewardController::class, 'bulkApprove'])->name('rewards.bulk-approve');
 });
 
 /*

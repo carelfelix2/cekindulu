@@ -104,6 +104,16 @@ class Product extends Model
     }
 
     /**
+     * Get the affiliate clicks for the product.
+     *
+     * @return HasMany<AffiliateClick>
+     */
+    public function affiliateClicks(): HasMany
+    {
+        return $this->hasMany(AffiliateClick::class);
+    }
+
+    /**
      * The articles that reference this product.
      *
      * @return BelongsToMany<Article>

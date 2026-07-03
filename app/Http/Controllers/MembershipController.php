@@ -5,12 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\MembershipPlan;
 use App\Models\Transaction;
 use App\Models\UserMembership;
+use App\Services\MidtransService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class MembershipController extends Controller
 {
+    protected MidtransService $midtrans;
+
+    public function __construct(MidtransService $midtrans)
+    {
+        $this->midtrans = $midtrans;
+    }
+
     /**
      * Display a listing of available membership plans.
      */
@@ -30,11 +38,26 @@ class MembershipController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        $user = Auth::user();
+
+        // Check if user has pending transaction for this plan
+        $pendingTransaction = Transaction::where('user_id', $user->id)
+            ->where('membership_plan_id', $plan->id)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if ($pendingTransaction) {
+            return redirect()
+                ->route('membership.transactions.detail', $pendingTransaction->invoice_number)
+                ->with('info', 'Anda masih memiliki transaksi pending untuk paket ini.');
+        }
+
         return view('pages.membership.checkout', compact('plan'));
     }
 
     /**
-     * Process the checkout / submit transaction with payment proof.
+     * Process the checkout - Create transaction and Midtrans Snap token.
      */
     public function processCheckout(Request $request, string $slug)
     {
@@ -43,14 +66,11 @@ class MembershipController extends Controller
             ->firstOrFail();
 
         $request->validate([
-            'payment_proof' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-            'payment_method' => ['required', 'string', 'max:50'],
+            'payment_method' => ['required', 'string', 'in:midtrans,manual_transfer'],
         ]);
 
         $user = Auth::user();
-
-        // Upload payment proof
-        $paymentProofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+        $paymentMethod = $request->payment_method;
 
         // Create transaction
         $transaction = Transaction::create([
@@ -58,15 +78,40 @@ class MembershipController extends Controller
             'membership_plan_id' => $plan->id,
             'invoice_number' => Transaction::generateInvoiceNumber(),
             'amount' => $plan->price,
-            'payment_method' => $request->payment_method,
+            'payment_method' => $paymentMethod,
+            'payment_gateway' => $paymentMethod === 'midtrans' ? 'midtrans' : 'manual_transfer',
             'status' => 'pending',
-            'payment_proof' => $paymentProofPath,
-            'expires_at' => now()->addDays(2), // auto-expire if not paid in 2 days
+            'expires_at' => now()->addDays(2),
         ]);
+
+        // If Midtrans, create Snap token
+        if ($paymentMethod === 'midtrans') {
+            $snapResult = $this->midtrans->createSnapToken($transaction);
+
+            if ($snapResult['success']) {
+                $transaction->update([
+                    'snap_token' => $snapResult['snap_token'],
+                    'snap_redirect_url' => $snapResult['redirect_url'],
+                ]);
+
+                return redirect()
+                    ->route('membership.transactions.detail', $transaction->invoice_number)
+                    ->with('success', 'Transaksi berhasil dibuat! Silakan lanjutkan pembayaran.');
+            } else {
+                $transaction->update(['status' => 'failed']);
+                return back()->with('error', 'Gagal membuat token pembayaran: ' . ($snapResult['message'] ?? 'Unknown error'));
+            }
+        }
+
+        // Manual transfer - require payment proof upload
+        if ($request->hasFile('payment_proof')) {
+            $paymentProofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+            $transaction->update(['payment_proof' => $paymentProofPath]);
+        }
 
         return redirect()
             ->route('membership.transactions.detail', $transaction->invoice_number)
-            ->with('success', 'Pembayaran berhasil dikirim! Silakan tunggu konfirmasi dari admin.');
+            ->with('success', 'Transaksi berhasil dibuat! Silakan upload bukti pembayaran.');
     }
 
     /**
@@ -92,6 +137,34 @@ class MembershipController extends Controller
             ->with(['membershipPlan', 'userMembership'])
             ->firstOrFail();
 
-        return view('pages.membership.transaction-detail', compact('transaction'));
+        $midtransClientKey = config('services.midtrans.client_key');
+
+        return view('pages.membership.transaction-detail', compact('transaction', 'midtransClientKey'));
+    }
+
+    /**
+     * Upload payment proof for manual transfer.
+     */
+    public function uploadPaymentProof(Request $request, string $invoiceNumber)
+    {
+        $transaction = Transaction::where('invoice_number', $invoiceNumber)
+            ->where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $request->validate([
+            'payment_proof' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+        ]);
+
+        // Delete old payment proof if exists
+        if ($transaction->payment_proof) {
+            Storage::disk('public')->delete($transaction->payment_proof);
+        }
+
+        // Upload new payment proof
+        $paymentProofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+        $transaction->update(['payment_proof' => $paymentProofPath]);
+
+        return back()->with('success', 'Bukti pembayaran berhasil diupload!');
     }
 }

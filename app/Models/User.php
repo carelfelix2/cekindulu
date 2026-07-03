@@ -13,13 +13,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'phone', 'role', 'avatar'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * Get the attributes that should be cast.
@@ -40,31 +41,25 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->role === 'admin';
-    }
-
-    /**
-     * Check if the user has a specific role.
-     */
-    public function hasRole(string $role): bool
-    {
-        return $this->role === $role;
+        return $this->hasRole('admin');
     }
 
     /**
      * Check if the user is an admin.
+     * Kept for backward compatibility, but now uses Spatie's hasRole.
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->hasRole('admin');
     }
 
     /**
      * Check if the user is a member.
+     * Kept for backward compatibility.
      */
     public function isMember(): bool
     {
-        return $this->role === 'member';
+        return $this->hasRole('user');
     }
 
     /*
@@ -106,5 +101,39 @@ class User extends Authenticatable implements FilamentUser
     public function isPremium(): bool
     {
         return $this->activeMembership()->exists();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reward Points Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * All reward points for the user.
+     */
+    public function rewardPoints(): HasMany
+    {
+        return $this->hasMany(RewardPoint::class);
+    }
+
+    /**
+     * Get user's total approved points.
+     */
+    public function getTotalApprovedPointsAttribute(): int
+    {
+        return $this->rewardPoints()
+            ->where('status', 'approved')
+            ->sum('points');
+    }
+
+    /**
+     * Get user's total pending points.
+     */
+    public function getTotalPendingPointsAttribute(): int
+    {
+        return $this->rewardPoints()
+            ->where('status', 'pending')
+            ->sum('points');
     }
 }

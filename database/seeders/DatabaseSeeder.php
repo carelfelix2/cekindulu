@@ -27,19 +27,29 @@ class DatabaseSeeder extends Seeder
         $this->command->info('👤 Creating users...');
         $admin = User::create([
             'name' => 'Admin CekDulu',
-            'email' => 'admin@cekdulu.com',
+            'email' => 'admin@wablast.net',
             'password' => Hash::make('password'),
             'phone' => '081234567890',
             'role' => 'admin',
             'email_verified_at' => now(),
         ]);
 
-        // Create member users
+        // Create demo user
+        User::create([
+            'name' => 'User Demo',
+            'email' => 'user@wablast.net',
+            'password' => Hash::make('password'),
+            'phone' => '081234567891',
+            'role' => 'user',
+            'email_verified_at' => now(),
+        ]);
+
+        // Create additional member users for testing
         User::create([
             'name' => 'Budi Santoso',
             'email' => 'budi@example.com',
             'password' => Hash::make('password'),
-            'phone' => '081234567891',
+            'phone' => '081234567892',
             'role' => 'member',
             'email_verified_at' => now(),
         ]);
@@ -48,7 +58,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Siti Rahayu',
             'email' => 'siti@example.com',
             'password' => Hash::make('password'),
-            'phone' => '081234567892',
+            'phone' => '081234567893',
             'role' => 'member',
             'email_verified_at' => now(),
         ]);

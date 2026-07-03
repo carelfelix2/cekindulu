@@ -40,4 +40,12 @@ class Marketplace extends Model
     {
         return $this->hasMany(AffiliateLink::class);
     }
+
+    /**
+     * Get all affiliate clicks for this marketplace.
+     */
+    public function affiliateClicks(): HasMany
+    {
+        return $this->hasMany(AffiliateClick::class);
+    }
 }

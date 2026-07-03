@@ -41,12 +41,17 @@
                     </div>
                     <div class="dropdown-divider"></div>
                     <a href="{{ route('dashboard') }}" class="dropdown-item">Dashboard</a>
-                    <a href="{{ route('membership.transactions') }}" class="dropdown-item">Riwayat Transaksi</a>
-                    <a href="{{ route('profile.edit') }}" class="dropdown-item">Profil Saya</a>
                     @if(Auth::user()->isAdmin())
-                        <div class="dropdown-divider"></div>
-                        <a href="/admin" class="dropdown-item">Admin Panel</a>
+                        <a href="{{ route('admin.dashboard') }}" class="dropdown-item">
+                            <span style="color: #dc2626; font-weight: 600;">⚡ Admin Dashboard</span>
+                        </a>
+                        <a href="/admin" class="dropdown-item">
+                            <span style="color: #dc2626; font-weight: 600;">🛠️ Filament Panel</span>
+                        </a>
+                    @else
+                        <a href="{{ route('membership.transactions') }}" class="dropdown-item">Riwayat Transaksi</a>
                     @endif
+                    <a href="{{ route('profile.edit') }}" class="dropdown-item">Profil Saya</a>
                     <div class="dropdown-divider"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
