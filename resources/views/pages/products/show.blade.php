@@ -162,10 +162,10 @@
                         </h2>
                     </div>
                     <div class="divide-y divide-surface-100 dark:divide-surface-800">
-                        @foreach((array)$product->specifications as $key => $value)
+                        @foreach((array)$product->specifications as $spec)
                             <div class="flex px-6 py-3 hover:bg-surface-50 dark:hover:bg-surface-800/40 transition-colors">
-                                <span class="w-2/5 text-xs text-surface-500 dark:text-surface-400 font-medium">{{ $key }}</span>
-                                <span class="w-3/5 text-xs text-surface-800 dark:text-surface-200">{{ $value }}</span>
+                                <span class="w-2/5 text-xs text-surface-500 dark:text-surface-400 font-medium">{{ is_array($spec) ? ($spec['key'] ?? '') : $spec }}</span>
+                                <span class="w-3/5 text-xs text-surface-800 dark:text-surface-200">{{ is_array($spec) ? ($spec['value'] ?? '') : '' }}</span>
                             </div>
                         @endforeach
                     </div>

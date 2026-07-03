@@ -68,6 +68,11 @@ class DatabaseSeeder extends Seeder
             MembershipPlanSeeder::class,
         ]);
 
+        // Seed dummy transactions (after users and membership plans)
+        $this->call([
+            DummyTransactionSeeder::class,
+        ]);
+
         // Seed categories (20)
         $this->command->info('📁 Creating 20 categories...');
         Category::factory(20)->create();
@@ -152,5 +157,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('   - Product Prices: ' . ProductPrice::count());
         $this->command->info('   - Affiliate Links: ' . AffiliateLink::count());
         $this->command->info('   - Articles: ' . Article::count());
+        $this->command->info('   - Membership Plans: ' . \App\Models\MembershipPlan::count());
+        $this->command->info('   - Transactions: ' . \App\Models\Transaction::count());
     }
 }

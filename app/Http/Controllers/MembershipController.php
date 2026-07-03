@@ -5,20 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\MembershipPlan;
 use App\Models\Transaction;
 use App\Models\UserMembership;
-use App\Services\MidtransService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class MembershipController extends Controller
 {
-    protected MidtransService $midtrans;
-
-    public function __construct(MidtransService $midtrans)
-    {
-        $this->midtrans = $midtrans;
-    }
-
     /**
      * Display a listing of available membership plans.
      */
@@ -57,7 +49,7 @@ class MembershipController extends Controller
     }
 
     /**
-     * Process the checkout - Create transaction and Midtrans Snap token.
+     * Process the checkout - Create transaction for simulation.
      */
     public function processCheckout(Request $request, string $slug)
     {
@@ -65,53 +57,122 @@ class MembershipController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $request->validate([
-            'payment_method' => ['required', 'string', 'in:midtrans,manual_transfer'],
-        ]);
-
         $user = Auth::user();
-        $paymentMethod = $request->payment_method;
 
-        // Create transaction
+        // Create transaction with pending status
         $transaction = Transaction::create([
             'user_id' => $user->id,
             'membership_plan_id' => $plan->id,
             'invoice_number' => Transaction::generateInvoiceNumber(),
             'amount' => $plan->price,
-            'payment_method' => $paymentMethod,
-            'payment_gateway' => $paymentMethod === 'midtrans' ? 'midtrans' : 'manual_transfer',
+            'payment_method' => 'Simulation',
+            'payment_gateway' => 'simulation',
             'status' => 'pending',
             'expires_at' => now()->addDays(2),
         ]);
 
-        // If Midtrans, create Snap token
-        if ($paymentMethod === 'midtrans') {
-            $snapResult = $this->midtrans->createSnapToken($transaction);
+        return redirect()
+            ->route('membership.transactions.detail', $transaction->invoice_number)
+            ->with('success', 'Transaksi berhasil dibuat! Silakan simulasikan pembayaran.');
+    }
 
-            if ($snapResult['success']) {
-                $transaction->update([
-                    'snap_token' => $snapResult['snap_token'],
-                    'snap_redirect_url' => $snapResult['redirect_url'],
+    /**
+     * Simulate payment success.
+     */
+    public function simulatePaymentSuccess(string $invoiceNumber)
+    {
+        $transaction = Transaction::where('invoice_number', $invoiceNumber)
+            ->where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        DB::transaction(function () use ($transaction) {
+            // Generate simulation reference
+            $paymentReference = 'SIM-' . strtoupper(substr(uniqid(), -8));
+
+            // Update transaction
+            $transaction->update([
+                'status' => 'paid',
+                'payment_method' => 'Simulation',
+                'payment_reference' => $paymentReference,
+                'paid_at' => now(),
+            ]);
+
+            // Create or update user membership
+            $user = $transaction->user;
+            $plan = $transaction->membershipPlan;
+
+            $existingMembership = UserMembership::where('user_id', $user->id)->first();
+
+            if ($existingMembership) {
+                // Extend existing membership
+                $newEndsAt = $existingMembership->ends_at && $existingMembership->ends_at->isFuture()
+                    ? $existingMembership->ends_at->addDays($plan->duration_days)
+                    : now()->addDays($plan->duration_days);
+
+                $existingMembership->update([
+                    'membership_plan_id' => $plan->id,
+                    'transaction_id' => $transaction->id,
+                    'started_at' => now(),
+                    'ends_at' => $newEndsAt,
+                    'is_active' => true,
                 ]);
-
-                return redirect()
-                    ->route('membership.transactions.detail', $transaction->invoice_number)
-                    ->with('success', 'Transaksi berhasil dibuat! Silakan lanjutkan pembayaran.');
             } else {
-                $transaction->update(['status' => 'failed']);
-                return back()->with('error', 'Gagal membuat token pembayaran: ' . ($snapResult['message'] ?? 'Unknown error'));
+                // Create new membership
+                UserMembership::create([
+                    'user_id' => $user->id,
+                    'membership_plan_id' => $plan->id,
+                    'transaction_id' => $transaction->id,
+                    'started_at' => now(),
+                    'ends_at' => now()->addDays($plan->duration_days),
+                    'is_active' => true,
+                ]);
             }
-        }
 
-        // Manual transfer - require payment proof upload
-        if ($request->hasFile('payment_proof')) {
-            $paymentProofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
-            $transaction->update(['payment_proof' => $paymentProofPath]);
-        }
+            // Create notification (if notification system exists)
+            if (method_exists($user, 'notify')) {
+                $user->notify(new \App\Notifications\MembershipActivated($transaction));
+            }
+        });
+
+        return redirect()
+            ->route('user.dashboard')
+            ->with('success', 'Pembayaran berhasil disimulasikan. Membership Premium aktif.');
+    }
+
+    /**
+     * Simulate payment failure.
+     */
+    public function simulatePaymentFailed(string $invoiceNumber)
+    {
+        $transaction = Transaction::where('invoice_number', $invoiceNumber)
+            ->where('user_id', Auth::id())
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $transaction->update([
+            'status' => 'failed',
+            'payment_method' => 'Simulation',
+        ]);
 
         return redirect()
             ->route('membership.transactions.detail', $transaction->invoice_number)
-            ->with('success', 'Transaksi berhasil dibuat! Silakan upload bukti pembayaran.');
+            ->with('error', 'Pembayaran gagal.');
+    }
+
+    /**
+     * Keep transaction as pending (simulate pending state).
+     */
+    public function simulatePaymentPending(string $invoiceNumber)
+    {
+        $transaction = Transaction::where('invoice_number', $invoiceNumber)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        // Just redirect back with info message
+        return redirect()
+            ->route('membership.transactions.detail', $transaction->invoice_number)
+            ->with('info', 'Transaksi masih dalam status menunggu pembayaran.');
     }
 
     /**
@@ -137,34 +198,6 @@ class MembershipController extends Controller
             ->with(['membershipPlan', 'userMembership'])
             ->firstOrFail();
 
-        $midtransClientKey = config('services.midtrans.client_key');
-
-        return view('pages.membership.transaction-detail', compact('transaction', 'midtransClientKey'));
-    }
-
-    /**
-     * Upload payment proof for manual transfer.
-     */
-    public function uploadPaymentProof(Request $request, string $invoiceNumber)
-    {
-        $transaction = Transaction::where('invoice_number', $invoiceNumber)
-            ->where('user_id', Auth::id())
-            ->where('status', 'pending')
-            ->firstOrFail();
-
-        $request->validate([
-            'payment_proof' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-        ]);
-
-        // Delete old payment proof if exists
-        if ($transaction->payment_proof) {
-            Storage::disk('public')->delete($transaction->payment_proof);
-        }
-
-        // Upload new payment proof
-        $paymentProofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
-        $transaction->update(['payment_proof' => $paymentProofPath]);
-
-        return back()->with('success', 'Bukti pembayaran berhasil diupload!');
+        return view('pages.membership.transaction-detail', compact('transaction'));
     }
 }

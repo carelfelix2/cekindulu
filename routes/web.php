@@ -34,15 +34,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/membership/{slug}/checkout', [MembershipController::class, 'processCheckout'])->name('membership.checkout.process');
     Route::get('/dashboard/transactions', [MembershipController::class, 'transactions'])->name('membership.transactions');
     Route::get('/dashboard/transactions/{invoiceNumber}', [MembershipController::class, 'transactionDetail'])->name('membership.transactions.detail');
-    Route::post('/dashboard/transactions/{invoiceNumber}/upload-proof', [MembershipController::class, 'uploadPaymentProof'])->name('membership.transactions.upload-proof');
+
+    // Payment Simulation Routes
+    Route::post('/dashboard/transactions/{invoiceNumber}/simulate-success', [MembershipController::class, 'simulatePaymentSuccess'])->name('membership.simulate.success');
+    Route::post('/dashboard/transactions/{invoiceNumber}/simulate-failed', [MembershipController::class, 'simulatePaymentFailed'])->name('membership.simulate.failed');
+    Route::post('/dashboard/transactions/{invoiceNumber}/simulate-pending', [MembershipController::class, 'simulatePaymentPending'])->name('membership.simulate.pending');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Midtrans Webhook (no CSRF protection needed)
-|--------------------------------------------------------------------------
-*/
-Route::post('/payment/midtrans/notification', [App\Http\Controllers\MidtransWebhookController::class, 'notification'])->name('midtrans.notification');
 
 /*
 |--------------------------------------------------------------------------

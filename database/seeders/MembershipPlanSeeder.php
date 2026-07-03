@@ -4,58 +4,71 @@ namespace Database\Seeders;
 
 use App\Models\MembershipPlan;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class MembershipPlanSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        MembershipPlan::create([
-            'name' => 'Mingguan',
-            'slug' => 'mingguan',
-            'price' => 15000,
-            'duration_days' => 7,
-            'description' => 'Coba fitur premium CekDulu selama 7 hari dengan harga terjangkau.',
-            'features' => [
-                'Price Alert: notifikasi harga turun',
-                'Exclusive Deals: akses promo khusus',
-                'Badge Premium Member',
-                'Bandingkan hingga 10 produk',
+        $plans = [
+            [
+                'name' => 'Free',
+                'slug' => 'free',
+                'description' => 'Paket gratis dengan fitur dasar',
+                'price' => 0,
+                'duration_days' => 365,
+                'features' => [
+                    'Akses produk terbatas',
+                    'Perbandingan hingga 2 produk',
+                    'Artikel gratis',
+                ],
+                'is_active' => true,
             ],
-            'is_active' => true,
-        ]);
+            [
+                'name' => 'Premium Monthly',
+                'slug' => 'premium-monthly',
+                'description' => 'Paket bulanan dengan semua fitur premium',
+                'price' => 49000,
+                'duration_days' => 30,
+                'features' => [
+                    'Akses semua produk',
+                    'Perbandingan hingga 5 produk',
+                    'Price alert & notifikasi',
+                    'Analitik mendalam',
+                    'Diskon eksklusif',
+                    'Prioritas customer support',
+                ],
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Premium Yearly',
+                'slug' => 'premium-yearly',
+                'description' => 'Paket tahunan hemat hingga 32%',
+                'price' => 399000,
+                'duration_days' => 365,
+                'features' => [
+                    'Akses semua produk',
+                    'Perbandingan hingga 5 produk',
+                    'Price alert & notifikasi',
+                    'Analitik mendalam',
+                    'Diskon eksklusif',
+                    'Prioritas customer support',
+                    'Hemat Rp 189.000',
+                ],
+                'is_active' => true,
+            ],
+        ];
 
-        MembershipPlan::create([
-            'name' => 'Bulanan',
-            'slug' => 'bulanan',
-            'price' => 49000,
-            'duration_days' => 30,
-            'description' => 'Nikmati semua fitur premium selama sebulan penuh. Paling populer!',
-            'features' => [
-                'Price Alert: notifikasi harga turun',
-                'Exclusive Deals: akses promo khusus',
-                'Badge Premium Member',
-                'Bandingkan hingga 10 produk',
-                'Prioritas support',
-            ],
-            'is_active' => true,
-        ]);
+        foreach ($plans as $plan) {
+            MembershipPlan::updateOrCreate(
+                ['slug' => $plan['slug']],
+                $plan
+            );
+        }
 
-        MembershipPlan::create([
-            'name' => 'Tahunan',
-            'slug' => 'tahunan',
-            'price' => 399000,
-            'duration_days' => 365,
-            'description' => 'Hemat lebih banyak dengan langganan tahunan. Hanya Rp33.250/bulan!',
-            'features' => [
-                'Price Alert: notifikasi harga turun',
-                'Exclusive Deals: akses promo khusus',
-                'Badge Premium Member',
-                'Bandingkan hingga 10 produk',
-                'Prioritas support',
-                'Early access fitur baru',
-                'Diskon 32% dibanding bulanan',
-            ],
-            'is_active' => true,
-        ]);
+        $this->command->info('✓ Membership plans seeded successfully!');
     }
 }
