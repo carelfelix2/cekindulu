@@ -17,4 +17,9 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+// Increase max execution time for long-running admin pages (avoid FatalError on heavy renders)
+if (function_exists('set_time_limit')) {
+    @set_time_limit(120);
+}
+
 $app->handleRequest(Request::capture());

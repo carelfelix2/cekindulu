@@ -40,7 +40,7 @@
     @endauth
 
     {{-- Plans Grid --}}
-    <div class="grid grid-cols-1 md:grid-cols-{{ $plans->count() > 2 ? '3' : '2' }} gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         @foreach($plans as $plan)
             @php
                 $isPopular = $plan->is_popular ?? false;

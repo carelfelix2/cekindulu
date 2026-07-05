@@ -8,9 +8,23 @@ use App\Models\UserMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MembershipController extends Controller
 {
+    /**
+     * Resolve a membership plan by slug or numeric ID.
+     */
+    protected function resolvePlan(string $slugOrId): MembershipPlan
+    {
+        return MembershipPlan::where(function ($query) use ($slugOrId) {
+            $query->where('slug', $slugOrId)
+                ->orWhere('id', $slugOrId);
+            })
+            ->where('is_active', true)
+            ->firstOrFail();
+    }
+
     /**
      * Display a listing of available membership plans.
      */
@@ -26,9 +40,7 @@ class MembershipController extends Controller
      */
     public function checkout(string $slug)
     {
-        $plan = MembershipPlan::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+        $plan = $this->resolvePlan($slug);
 
         $user = Auth::user();
 
@@ -53,9 +65,7 @@ class MembershipController extends Controller
      */
     public function processCheckout(Request $request, string $slug)
     {
-        $plan = MembershipPlan::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+        $plan = $this->resolvePlan($slug);
 
         $user = Auth::user();
 
@@ -129,8 +139,8 @@ class MembershipController extends Controller
                 ]);
             }
 
-            // Create notification (if notification system exists)
-            if (method_exists($user, 'notify')) {
+            // Create notification only when notifications table exists
+            if (method_exists($user, 'notify') && Schema::hasTable('notifications')) {
                 $user->notify(new \App\Notifications\MembershipActivated($transaction));
             }
         });

@@ -24,6 +24,8 @@ class DashboardController extends Controller
             'total_transactions' => $user->transactions()->count(),
             'approved_points' => $user->total_approved_points,
             'pending_points' => $user->total_pending_points,
+            // Total points (approved + pending)
+            'points' => $user->rewardPoints()->sum('points'),
         ];
 
         // User's active membership
